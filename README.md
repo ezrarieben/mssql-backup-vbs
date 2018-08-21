@@ -5,7 +5,7 @@ A VBScript to generate a backup file of a MS SQL database
 1. Edit `mssql_backup.vbs`
 2. Set the required options (Line 2-3)
   ```vbs
-  const ServerName = "[name of ms sql server]"
+  const ServerName = "[name of ms sql server]\[name of sql service]"
   const BackupDir = "[folder path]"
   const DBName = "[db name]"
   ```
