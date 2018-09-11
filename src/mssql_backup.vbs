@@ -1,7 +1,7 @@
 '###################################################
 ' 	Author:	Ezra Rieben
 ' 	Source:	https://github.com/ezrarieben/mssql-backup-vbs/
-'	Ver:	1.0.0
+'	Ver:	1.1.0
 '###################################################
 '
 '	MIT License
@@ -28,10 +28,20 @@
 '
 '###################################################
 
-'Required constant defenitions
+'Settings
 const ServerName = "localhost\SQLEXPRESS" 'Name of MS SQL server
 const BackupDir = "D:\foo" 'Folder to back up to. Trailing slash not needed
 const DBName = "foobar" 'Name of DB to back up
+
+const CopyOnCompleteBool = false 'set to true if .BAK needs to be copied after backup has completed
+const CopyOnCompleteDir = "D:\bar" 'Path to copy .BAK file to if CopyOnCompleteBool is set to true. Trailing slash not needed
+
+const MoveOnCompleteBool = false 'set to true if .BAK needs to be moved after backup has completed
+const MoveOnCompleteDir = "D:\bar" 'Path to move .BAK file to if MoveOnCompleteBool is set to true. Trailing slash not needed
+
+'NOTE: If both CopyOnCompleteBool and MoveOnCompleteBool are set to true,
+'	   it will copy the file first and then move it
+
 
 'Optional constant defenitions for auth method: SQL Server Authentication
 const DBUser = ""
@@ -41,6 +51,10 @@ const DBPass = ""
 IF ServerName = "" THEN wscript.quit
 IF BackupDir = "" THEN wscript.quit
 IF DBName = "" THEN wscript.quit
+
+
+backupFileName = Year(Now) & "-" & Month(Now) & "-" & Day(Now) & "_" & DBName & ".BAK"
+
 
 SET conn = CREATEOBJECT("ADODB.Connection")
 SET cmd = CREATEOBJECT("ADODB.Command")
@@ -58,20 +72,45 @@ END IF
 'Open DB connection according to the specified connection string
 conn.open connString
 
-backupDB DBName
+call backupDB()
 
 conn.close
 
+IF CopyOnCompleteBool = true THEN
+	call copyOnComplete()
+END IF
 
-SUB backupDB(databaseName)
-	fileName = BackupDir & "\" & Year(Now) & "-" & Month(Now) & "-" & Day(Now) & "_" & databaseName & ".BAK"
+IF MoveOnCompleteBool = true THEN
+	call moveOnComplete()
+END IF
+
+SUB backupDB()
+	backupFilePath = BackupDir & "\" & backupFileName
 
 	'Start new DB command
 	SET cmdbackup = CREATEOBJECT("ADODB.Command")
 	cmdbackup.activeconnection = conn
 	'Set command to be executed to generate backup file
-	cmdbackup.commandtext = "backup database " & databaseName & " to disk='" & fileName & "'"
+	cmdbackup.commandtext = "backup database " & DBName & " to disk='" & backupFilePath & "'"
 	'Execute DB command to generate file
 	cmdbackup.EXECUTE
 
+END SUB
+
+SUB moveOnComplete()
+	backupFilePath = BackupDir & "\" & backupFileName
+	moveToPath = MoveOnCompleteDir & "\" & backupFileName
+	
+	'Move the file
+	Set fileSystem = CreateObject("Scripting.FileSystemObject")
+	fileSystem.MoveFile backupFilePath, moveToPath
+END SUB
+
+SUB copyOnComplete()
+	backupFilePath = BackupDir & "\" & backupFileName
+	copyToPath = CopyOnCompleteDir & "\" & backupFileName
+
+	'Copy the file
+	Set fileSystem = CreateObject("Scripting.FileSystemObject")
+	fileSystem.CopyFile backupFilePath, copyToPath
 END SUB
