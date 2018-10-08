@@ -39,3 +39,5 @@ const MoveOnCompleteDir = "D:\bar"
 ```
 3. Execute `mssql_backup.vbs`
 > **NOTE:** If both `CopyOnCompleteBool` and `MoveOnCompleteBool` are set to true, the script will make a copy of the .BAK file first and then move it to the desired location.
+---
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
